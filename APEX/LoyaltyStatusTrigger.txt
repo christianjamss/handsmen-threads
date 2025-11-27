@@ -1,0 +1,30 @@
+trigger LoyaltyStatusTrigger on HandsMen_Customer__c (after insert, after update) {
+
+    List<HandsMen_Customer__c> customersToUpdate = new List<HandsMen_Customer__c>();
+
+    for (HandsMen_Customer__c cust : Trigger.new) {
+        HandsMen_Customer__c oldRecord = Trigger.isUpdate ? Trigger.oldMap.get(cust.Id) : null;
+
+        if (Trigger.isInsert || 
+           (Trigger.isUpdate && cust.Total_Purchases__c != oldRecord.Total_Purchases__c)) {
+
+            HandsMen_Customer__c updatedCust = new HandsMen_Customer__c(Id = cust.Id);
+
+            if (cust.Total_Purchases__c > 1000) {
+                updatedCust.Loyalty_Status__c = 'Gold';
+            } 
+            else if (cust.Total_Purchases__c < 500) {
+                updatedCust.Loyalty_Status__c = 'Bronze';
+            } 
+            else {
+                updatedCust.Loyalty_Status__c = 'Silver';
+            }
+
+            customersToUpdate.add(updatedCust);
+        }
+    }
+
+    if (!customersToUpdate.isEmpty()) {
+        update customersToUpdate;
+    }
+}
